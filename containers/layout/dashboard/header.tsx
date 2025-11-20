@@ -1,6 +1,8 @@
 'use client';
 
+import { ModalItem } from './modal-item';
 import { cn } from '@/utils/cn';
+import { Plus } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef } from 'react';
@@ -40,34 +42,47 @@ const Tabs = () => {
   }, [pathname]);
 
   return (
-    <div
-      ref={containerRef}
-      className="flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth lg:justify-center lg:overflow-x-visible"
-      style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-    >
-      {data.map((item) => {
-        const isActive =
-          pathname === item.href || pathname.startsWith(item.href + '/');
-        return (
-          <Link
-            ref={isActive ? activeTabRef : null}
-            href={item.href}
-            key={item.href}
-            className="shrink-0 snap-center"
-          >
-            <button
-              className={cn(
-                'rounded-xl px-4 py-2.5 text-sm font-medium',
-                isActive
-                  ? 'bg-primary text-white'
-                  : 'bg-transparent text-gray-500',
-              )}
+    <>
+      <div
+        ref={containerRef}
+        className="flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth lg:justify-center lg:overflow-x-visible"
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+      >
+        {data.map((item) => {
+          const isActive =
+            pathname === item.href || pathname.startsWith(item.href + '/');
+          return (
+            <Link
+              ref={isActive ? activeTabRef : null}
+              href={item.href}
+              key={item.href}
+              className="relative shrink-0 snap-center"
             >
-              {item.label}
-            </button>
-          </Link>
-        );
-      })}
-    </div>
+              <button
+                className={cn(
+                  'rounded-xl px-4 py-2.5 text-sm font-medium hover:bg-primary/90 transition-colors',
+                  isActive
+                    ? 'bg-primary text-white'
+                    : 'bg-transparent text-gray-500',
+                )}
+              >
+                {item.label}
+              </button>
+              {isActive && (
+                <ModalItem
+                  modalKey="add-guess-picture"
+                  mode="add"
+                  btn={
+                    <button className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-lg border border-white bg-primary text-white shadow-md transition-colors hover:bg-primary/90">
+                      <Plus className="h-3 w-3" />
+                    </button>
+                  }
+                />
+              )}
+            </Link>
+          );
+        })}
+      </div>
+    </>
   );
 };

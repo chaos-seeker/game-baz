@@ -58,7 +58,7 @@ const Tabs = () => {
           >
             <button
               className={cn(
-                'rounded-xl px-4 py-2.5 text-sm font-medium',
+                'rounded-xl px-4 py-2.5 text-sm font-medium hover:bg-primary/90 transition-colors',
                 isActive
                   ? 'bg-primary text-white'
                   : 'bg-transparent text-gray-500',
