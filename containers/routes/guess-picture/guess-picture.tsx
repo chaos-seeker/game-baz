@@ -2,23 +2,54 @@
 
 import { trpc } from '@/utils/trpc';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { CountdownCircleTimer } from 'react-countdown-circle-timer';
+
+type ZoomPosition = {
+  x: number;
+  y: number;
+  scale: number;
+};
+
+const generateRandomZoom = (): ZoomPosition => ({
+  x: Math.random() * 100,
+  y: Math.random() * 100,
+  scale: 2.5 + Math.random() * 2,
+});
 
 export const GuessPicture = () => {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [isPlaying, setIsPlaying] = useState(true);
-  const [key, setKey] = useState(0);
+  const [timerKey, setTimerKey] = useState(0);
   const [isLoadingNext, setIsLoadingNext] = useState(false);
+  const [zoomPosition, setZoomPosition] = useState<ZoomPosition>({
+    x: 50,
+    y: 50,
+    scale: 1,
+  });
 
-  const fetchData = trpc.guessPicture.getRandom.useQuery(undefined, {
+  const {
+    data: guessPicture,
+    isLoading,
+    refetch,
+  } = trpc.guessPicture.getRandom.useQuery(undefined, {
     refetchOnWindowFocus: false,
   });
 
-  const questions = fetchData.data?.questions || [];
+  const questions = guessPicture?.questions || [];
+
+  const correctQuestion = useMemo(
+    () => questions.find((q) => q.isCorrect),
+    [questions],
+  );
+
+  useEffect(() => {
+    if (guessPicture) {
+      setZoomPosition(generateRandomZoom());
+    }
+  }, [guessPicture]);
 
   const handleTimerComplete = () => {
-    const correctQuestion = questions.find((q) => q.isCorrect);
     if (correctQuestion) {
       setSelectedId(correctQuestion.id);
     }
@@ -35,12 +66,31 @@ export const GuessPicture = () => {
     setIsLoadingNext(true);
     setSelectedId(null);
     setIsPlaying(true);
-    setKey((prev) => prev + 1);
-    await fetchData.refetch();
+    setTimerKey((prev) => prev + 1);
+    await refetch();
     setIsLoadingNext(false);
   };
 
-  if (fetchData.isLoading || isLoadingNext) {
+  const getButtonClassName = (
+    isSelected: boolean,
+    isCorrect: boolean,
+    hasSelection: boolean,
+  ): string => {
+    let className = 'border rounded-xl text-sm p-3 w-full transition-all';
+    if (hasSelection) {
+      if (isCorrect) {
+        className += ' bg-green-500 text-white border-green-500';
+      } else if (isSelected) {
+        className += ' bg-red-500 text-white border-red-500';
+      }
+      className += ' cursor-not-allowed bg-gray-50 opacity-80';
+    } else {
+      className += ' hover:border-primary';
+    }
+    return className;
+  };
+
+  if (isLoading || isLoadingNext) {
     return (
       <section>
         <div className="container">
@@ -52,7 +102,7 @@ export const GuessPicture = () => {
     );
   }
 
-  if (!fetchData.data) {
+  if (!guessPicture) {
     return (
       <section>
         <div className="container">
@@ -64,6 +114,8 @@ export const GuessPicture = () => {
     );
   }
 
+  const hasSelection = selectedId !== null;
+
   return (
     <section>
       <div className="container">
@@ -72,7 +124,7 @@ export const GuessPicture = () => {
             <p className="font-medium text-primary">بازی حدس تصویر</p>
             {isPlaying && (
               <CountdownCircleTimer
-                key={key}
+                key={timerKey}
                 isPlaying={isPlaying}
                 duration={30}
                 colors={['#7b60db', '#F7B801', '#dc2626']}
@@ -86,42 +138,36 @@ export const GuessPicture = () => {
               </CountdownCircleTimer>
             )}
           </div>
-          <div className="flex items-center justify-center">
-            <Image
-              src={fetchData.data.image}
-              alt="guess picture"
-              width={300}
-              height={300}
-              className="rounded-xl object-cover"
-              unoptimized
-            />
+          <div className="flex items-center justify-center overflow-hidden rounded-xl">
+            <div className="relative w-[300px] h-[300px] aspect-square">
+              <Image
+                src={guessPicture.image}
+                alt="guess picture"
+                fill
+                className="rounded-xl object-cover"
+                style={{
+                  objectPosition: `${zoomPosition.x}% ${zoomPosition.y}%`,
+                  transform: `scale(${zoomPosition.scale})`,
+                  filter: 'blur(4px)',
+                }}
+                unoptimized
+              />
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-2">
             {questions.map((question) => {
               const isSelected = selectedId === question.id;
               const isCorrect = question.isCorrect;
-              const hasSelection = selectedId !== null;
-              let buttonClass =
-                'border rounded-xl text-smp p-3 w-full transition-all';
-              if (hasSelection) {
-                if (isCorrect) {
-                  buttonClass += ' bg-green-500 text-white border-green-500';
-                } else if (isSelected) {
-                  buttonClass += ' bg-red-500 text-white border-red-500';
-                }
-              } else {
-                buttonClass += ' hover:border-primary';
-              }
-              if (hasSelection) {
-                buttonClass += ' cursor-not-allowed bg-gray-50 opacity-80';
-              }
-
               return (
                 <button
                   key={question.id}
                   onClick={() => handleSelect(question.id)}
                   disabled={hasSelection}
-                  className={buttonClass}
+                  className={getButtonClassName(
+                    isSelected,
+                    isCorrect,
+                    hasSelection,
+                  )}
                 >
                   {question.text}
                 </button>
