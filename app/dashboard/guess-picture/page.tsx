@@ -2,8 +2,8 @@ import { ListItems } from '@/containers/routes/dashboard/guess-picture/list-item
 
 export default function Page() {
   return (
-    <div className="h-screen w-full">
+    <>
       <ListItems />
-    </div>
+    </>
   );
 }

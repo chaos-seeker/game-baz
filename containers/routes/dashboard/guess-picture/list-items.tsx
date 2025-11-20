@@ -71,11 +71,11 @@ export const ListItems = () => {
   }
 
   return (
-    <section className="h-full w-full container">
+    <section className="h-[calc(100vh-190px)] w-full container">
       <div className="flex-1 overflow-auto">
         <div className="w-full rounded-xl overflow-hidden border">
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-50 border-b">
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (

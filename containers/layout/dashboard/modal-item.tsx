@@ -6,9 +6,8 @@ import { Modal } from '@/components/modal';
 import { useModal } from '@/hooks/modal';
 import { TGuessPicture } from '@/types/guess-picture';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useRef } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import toast from 'react-hot-toast';
 import { z } from 'zod';
 
 const formSchema = z.object({
@@ -51,8 +50,11 @@ interface IModalItemProps {
 
 export const ModalItem = (props: IModalItemProps) => {
   const modal = useModal(props.modalKey);
+  const formRef = useRef<HTMLFormElement>(null);
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
+    mode: 'onBlur',
+    reValidateMode: 'onChange',
     defaultValues: {
       image: null,
       questions: [
@@ -64,6 +66,20 @@ export const ModalItem = (props: IModalItemProps) => {
     },
   });
 
+  useEffect(() => {
+    if (!modal.isShow) {
+      form.reset({
+        image: null,
+        questions: [
+          { text: '', isCorrect: false },
+          { text: '', isCorrect: false },
+          { text: '', isCorrect: false },
+          { text: '', isCorrect: false },
+        ],
+      });
+    }
+  }, [modal.isShow, form]);
+
   const handleBtnClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -71,17 +87,7 @@ export const ModalItem = (props: IModalItemProps) => {
   };
 
   const onSubmit = async (data: FormValues) => {
-    try {
-      console.log('Form data:', data);
-      toast.success(
-        props.mode === 'edit' ? 'با موفقیت ویرایش شد' : 'با موفقیت افزوده شد',
-      );
-      modal.hide();
-      form.reset();
-    } catch (error) {
-      console.error('Error submitting form:', error);
-      toast.error('خطا در ارسال فرم');
-    }
+    
   };
 
   return (
@@ -94,7 +100,8 @@ export const ModalItem = (props: IModalItemProps) => {
         title={props.mode === 'edit' ? 'ویرایش' : 'افزودن'}
         footer={
           <button
-            type="submit"
+            type="button"
+            onClick={() => form.handleSubmit(onSubmit)()}
             disabled={form.formState.isSubmitting}
             className="rounded-lg w-full bg-primary px-4 py-3.5 text-sm font-medium text-white transition-colors hover:bg-primary/90 disabled:opacity-50"
           >
@@ -106,7 +113,11 @@ export const ModalItem = (props: IModalItemProps) => {
           </button>
         }
       >
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <form
+          ref={formRef}
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="space-y-4"
+        >
           <div className="flex flex-col items-center justify-center">
             <Controller
               name="image"
