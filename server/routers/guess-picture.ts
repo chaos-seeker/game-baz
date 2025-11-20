@@ -113,4 +113,32 @@ export const guessPictureRouter = createTRPCRouter({
         where: { id: input.id },
       });
     }),
+  getRandom: publicProcedure.query(
+    async ({ ctx }): Promise<TGuessPicture | null> => {
+      const count = await ctx.prisma.guessPicture.count();
+      if (count === 0) return null;
+      const randomSkip = Math.floor(Math.random() * count);
+      const result = await ctx.prisma.guessPicture.findFirst({
+        skip: randomSkip,
+        include: {
+          questions: true,
+        },
+      });
+      if (!result) return null;
+      const mappedQuestions = result.questions.map(
+        (q: (typeof result.questions)[number]) => ({
+          id: q.id,
+          text: q.text,
+          isCorrect: q.isCorrect,
+        }),
+      );
+      const shuffledQuestions = [...mappedQuestions].sort(
+        () => Math.random() - 0.5,
+      );
+      return {
+        ...result,
+        questions: shuffledQuestions,
+      };
+    },
+  ),
 });

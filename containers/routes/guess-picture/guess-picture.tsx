@@ -1,5 +1,6 @@
 'use client';
 
+import { trpc } from '@/utils/trpc';
 import Image from 'next/image';
 import { useState } from 'react';
 import { CountdownCircleTimer } from 'react-countdown-circle-timer';
@@ -7,28 +8,15 @@ import { CountdownCircleTimer } from 'react-countdown-circle-timer';
 export const GuessPicture = () => {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [isPlaying, setIsPlaying] = useState(true);
-  const questions = [
-    {
-      id: 1,
-      text: 'موز',
-      isCorrect: true,
-    },
-    {
-      id: 2,
-      text: 'پرتقال',
-      isCorrect: false,
-    },
-    {
-      id: 3,
-      text: 'انجیر',
-      isCorrect: false,
-    },
-    {
-      id: 4,
-      text: 'سیب',
-      isCorrect: false,
-    },
-  ];
+  const [key, setKey] = useState(0);
+  const [isLoadingNext, setIsLoadingNext] = useState(false);
+
+  const fetchData = trpc.guessPicture.getRandom.useQuery(undefined, {
+    refetchOnWindowFocus: false,
+  });
+
+  const questions = fetchData.data?.questions || [];
+
   const handleTimerComplete = () => {
     const correctQuestion = questions.find((q) => q.isCorrect);
     if (correctQuestion) {
@@ -36,11 +24,45 @@ export const GuessPicture = () => {
     }
     setIsPlaying(false);
   };
+
   const handleSelect = (questionId: number) => {
     if (selectedId !== null) return;
     setSelectedId(questionId);
     setIsPlaying(false);
   };
+
+  const handleNext = async () => {
+    setIsLoadingNext(true);
+    setSelectedId(null);
+    setIsPlaying(true);
+    setKey((prev) => prev + 1);
+    await fetchData.refetch();
+    setIsLoadingNext(false);
+  };
+
+  if (fetchData.isLoading || isLoadingNext) {
+    return (
+      <section>
+        <div className="container">
+          <div className="border rounded-xl p-4 w-[330px] flex flex-col gap-4 items-center justify-center min-h-[400px]">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (!fetchData.data) {
+    return (
+      <section>
+        <div className="container">
+          <div className="border rounded-xl p-4 w-[330px] flex flex-col gap-4 items-center justify-center min-h-[400px]">
+            <p className="text-gray-500">آیتمی یافت نشد!</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section>
@@ -50,6 +72,7 @@ export const GuessPicture = () => {
             <p className="font-medium text-primary">بازی حدس تصویر</p>
             {isPlaying && (
               <CountdownCircleTimer
+                key={key}
                 isPlaying={isPlaying}
                 duration={30}
                 colors={['#7b60db', '#F7B801', '#dc2626']}
@@ -65,11 +88,12 @@ export const GuessPicture = () => {
           </div>
           <div className="flex items-center justify-center">
             <Image
-              src="/images/temp/image.avif"
+              src={fetchData.data.image}
               alt="guess picture"
               width={300}
               height={300}
-              className="rounded-xl"
+              className="rounded-xl object-cover"
+              unoptimized
             />
           </div>
           <div className="grid grid-cols-2 gap-2">
@@ -105,7 +129,10 @@ export const GuessPicture = () => {
             })}
           </div>
           {!isPlaying && (
-            <button className="bg-primary text-white rounded-xl p-3 w-full">
+            <button
+              onClick={handleNext}
+              className="bg-primary text-white rounded-xl p-3 w-full transition-colors hover:bg-primary/90"
+            >
               بعدی
             </button>
           )}
