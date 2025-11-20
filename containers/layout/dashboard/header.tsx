@@ -45,8 +45,7 @@ const Tabs = () => {
     <>
       <div
         ref={containerRef}
-        className="flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth lg:justify-center lg:overflow-x-visible"
-        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        className="flex snap-x snap-mandatory gap-4 scroll-smooth justify-center overflow-x-visible"
       >
         {data.map((item) => {
           const isActive =

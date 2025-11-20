@@ -123,8 +123,8 @@ export const ListGuessPictureItems = () => {
   return (
     <>
       <section className="h-[calc(100vh-190px)] w-full container">
-        <div className="flex-1 overflow-auto">
-          <div className="w-full rounded-xl overflow-hidden border">
+        <div className="flex-1 overflow-auto rounded-xl border">
+          <div className="w-full">
             <table className="w-full">
               <thead className="bg-gray-50 border-b">
                 {table.getHeaderGroups().map((headerGroup) => (
