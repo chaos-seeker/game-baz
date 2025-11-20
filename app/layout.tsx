@@ -1,4 +1,6 @@
 import './globals.css';
+import { Providers } from './providers';
+import Layout from '@/containers/layout';
 import type { Metadata } from 'next';
 import localFont from 'next/font/local';
 import { PropsWithChildren } from 'react';
@@ -17,8 +19,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout(props: PropsWithChildren) {
   return (
-    <html lang="en">
-      <body className={iransansx.className}>{props.children}</body>
+    <html lang="fa" dir="rtl">
+      <body className={iransansx.className}>
+        <Providers>
+          <Layout>{props.children}</Layout>
+        </Providers>
+      </body>
     </html>
   );
 }
