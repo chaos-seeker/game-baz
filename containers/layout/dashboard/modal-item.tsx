@@ -5,9 +5,11 @@ import { InputQuestion } from '@/components/input-question';
 import { Modal } from '@/components/modal';
 import { useModal } from '@/hooks/modal';
 import { TGuessPicture } from '@/types/guess-picture';
+import { trpc } from '@/utils/trpc';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ReactNode, useEffect, useRef } from 'react';
 import { Controller, useForm } from 'react-hook-form';
+import toast from 'react-hot-toast';
 import { z } from 'zod';
 
 const formSchema = z.object({
@@ -51,6 +53,23 @@ interface IModalItemProps {
 export const ModalItem = (props: IModalItemProps) => {
   const modal = useModal(props.modalKey);
   const formRef = useRef<HTMLFormElement>(null);
+  const utils = trpc.useUtils();
+  const createMutation = trpc.guessPicture.create.useMutation({
+    onSuccess: () => {
+      toast.success('با موفقیت افزوده شد');
+      utils.guessPicture.getAll.invalidate();
+      modal.hide();
+      form.reset();
+    },
+  });
+  const updateMutation = trpc.guessPicture.update.useMutation({
+    onSuccess: () => {
+      toast.success('با موفقیت ویرایش شد');
+      utils.guessPicture.getAll.invalidate();
+      modal.hide();
+      form.reset();
+    },
+  });
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     mode: 'onBlur',
@@ -65,7 +84,6 @@ export const ModalItem = (props: IModalItemProps) => {
       ],
     },
   });
-
   useEffect(() => {
     if (!modal.isShow) {
       form.reset({
@@ -79,15 +97,37 @@ export const ModalItem = (props: IModalItemProps) => {
       });
     }
   }, [modal.isShow, form]);
-
   const handleBtnClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     modal.show();
   };
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
+  };
 
   const onSubmit = async (data: FormValues) => {
-    
+    const imageBase64 = await fileToBase64(data.image!);
+    const payload = {
+      image: imageBase64,
+      questions: data.questions.map((q) => ({
+        text: q.text,
+        isCorrect: q.isCorrect,
+      })),
+    } as const;
+    if (props.mode === 'edit') {
+      await updateMutation.mutateAsync({
+        id: props.item!.id,
+        data: payload,
+      });
+    } else {
+      await createMutation.mutateAsync(payload);
+    }
   };
 
   return (
@@ -102,7 +142,11 @@ export const ModalItem = (props: IModalItemProps) => {
           <button
             type="button"
             onClick={() => form.handleSubmit(onSubmit)()}
-            disabled={form.formState.isSubmitting}
+            disabled={
+              form.formState.isSubmitting ||
+              createMutation.isPending ||
+              updateMutation.isPending
+            }
             className="rounded-lg w-full bg-primary px-4 py-3.5 text-sm font-medium text-white transition-colors hover:bg-primary/90 disabled:opacity-50"
           >
             {form.formState.isSubmitting
