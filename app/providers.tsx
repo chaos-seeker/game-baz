@@ -1,5 +1,6 @@
 'use client';
 
+import { trpc, trpcClient } from '@/utils/trpc';
 import { ProgressProvider } from '@bprogress/next/app';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
@@ -30,7 +31,9 @@ const queryClient = new QueryClient({
 const ReactQuery = (props: PropsWithChildren) => {
   return (
     <QueryClientProvider client={queryClient}>
-      {props.children}
+      <trpc.Provider client={trpcClient} queryClient={queryClient}>
+        {props.children}
+      </trpc.Provider>
     </QueryClientProvider>
   );
 };

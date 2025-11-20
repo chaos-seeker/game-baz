@@ -1,0 +1,24 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Question {
+  id             Int          @id @default(autoincrement())
+  text           String
+  isCorrect      Boolean
+  guessPictureId String
+  guessPicture   GuessPicture @relation(fields: [guessPictureId], references: [id], onDelete: Cascade)
+}
+
+model GuessPicture {
+  id        String     @id @default(cuid())
+  image     String
+  questions Question[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
