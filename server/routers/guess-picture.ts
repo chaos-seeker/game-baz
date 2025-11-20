@@ -1,5 +1,4 @@
 import type { TGuessPicture } from '../../types/guess-picture';
-import type { TQuestion } from '../../types/question';
 import { createTRPCRouter, publicProcedure } from '../trpc';
 import { guessPictureSchema } from '@/schemas/guess-picture';
 import { z } from 'zod';
@@ -11,23 +10,44 @@ export const guessPictureRouter = createTRPCRouter({
       const result = await ctx.prisma.guessPicture.create({
         data: {
           image: input.image,
-          questions: input.questions as TQuestion[],
+          questions: {
+            create: input.questions.map((q) => ({
+              text: q.text,
+              isCorrect: q.isCorrect,
+            })),
+          },
+        },
+        include: {
+          questions: true,
         },
       });
       return {
         ...result,
-        questions: result.questions as TQuestion[],
+        questions: result.questions.map(
+          (q: (typeof result.questions)[number]) => ({
+            id: q.id,
+            text: q.text,
+            isCorrect: q.isCorrect,
+          }),
+        ),
       };
     }),
   getAll: publicProcedure.query(async ({ ctx }): Promise<TGuessPicture[]> => {
     const results = await ctx.prisma.guessPicture.findMany({
+      include: {
+        questions: true,
+      },
       orderBy: {
         createdAt: 'desc',
       },
     });
     return results.map((item: (typeof results)[number]) => ({
       ...item,
-      questions: item.questions as TQuestion[],
+      questions: item.questions.map((q: (typeof item.questions)[number]) => ({
+        id: q.id,
+        text: q.text,
+        isCorrect: q.isCorrect,
+      })),
     }));
   }),
   getById: publicProcedure
@@ -35,11 +55,20 @@ export const guessPictureRouter = createTRPCRouter({
     .query(async ({ ctx, input }): Promise<TGuessPicture | null> => {
       const result = await ctx.prisma.guessPicture.findUnique({
         where: { id: input.id },
+        include: {
+          questions: true,
+        },
       });
       if (!result) return null;
       return {
         ...result,
-        questions: result.questions as TQuestion[],
+        questions: result.questions.map(
+          (q: (typeof result.questions)[number]) => ({
+            id: q.id,
+            text: q.text,
+            isCorrect: q.isCorrect,
+          }),
+        ),
       };
     }),
   update: publicProcedure
@@ -54,12 +83,27 @@ export const guessPictureRouter = createTRPCRouter({
         where: { id: input.id },
         data: {
           image: input.data.image,
-          questions: input.data.questions as TQuestion[],
+          questions: {
+            deleteMany: {},
+            create: input.data.questions.map((q) => ({
+              text: q.text,
+              isCorrect: q.isCorrect,
+            })),
+          },
+        },
+        include: {
+          questions: true,
         },
       });
       return {
         ...result,
-        questions: result.questions as TQuestion[],
+        questions: result.questions.map(
+          (q: (typeof result.questions)[number]) => ({
+            id: q.id,
+            text: q.text,
+            isCorrect: q.isCorrect,
+          }),
+        ),
       };
     }),
   delete: publicProcedure
