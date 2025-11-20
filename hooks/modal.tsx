@@ -1,6 +1,6 @@
 'use client';
 
-import { useQueryState } from 'nuqs';
+import { useCallback, useEffect, useState } from 'react';
 
 type Return = {
   isShow: boolean;
@@ -8,34 +8,46 @@ type Return = {
   hide: (keys?: string[]) => void;
 };
 
-const querySetters: Record<string, (val: string) => void> = {};
-
-function useRegisterQuerySetter(key: string, setter: (val: string) => void) {
-  querySetters[key] = setter;
-}
+const modalStates: Record<string, boolean> = {};
+const modalListeners: Record<string, Set<(val: boolean) => void>> = {};
 
 export function useModal(key: string): Return {
-  const prefixedKey = `modal-${key}`;
-  const [state, setState] = useQueryState(prefixedKey, {
-    defaultValue: '',
-  });
+  const [state, setState] = useState(() => modalStates[key] || false);
 
-  useRegisterQuerySetter(prefixedKey, setState);
-
-  const hide = (keys?: string[]) => {
-    if (keys && keys.length > 0) {
-      keys.forEach((k) => {
-        const setter = querySetters[`modal-${k}`];
-        if (setter) setter('');
-      });
-    } else {
-      setState('');
+  useEffect(() => {
+    if (!modalListeners[key]) {
+      modalListeners[key] = new Set();
     }
-  };
+    modalListeners[key].add(setState);
+
+    return () => {
+      modalListeners[key].delete(setState);
+    };
+  }, [key]);
+
+  const hide = useCallback(
+    (keys?: string[]) => {
+      if (keys && keys.length > 0) {
+        keys.forEach((k) => {
+          modalStates[k] = false;
+          modalListeners[k]?.forEach((listener) => listener(false));
+        });
+      } else {
+        modalStates[key] = false;
+        modalListeners[key]?.forEach((listener) => listener(false));
+      }
+    },
+    [key],
+  );
+
+  const show = useCallback(() => {
+    modalStates[key] = true;
+    modalListeners[key]?.forEach((listener) => listener(true));
+  }, [key]);
 
   return {
-    isShow: state === 'show',
-    show: () => setState('show'),
+    isShow: state,
+    show,
     hide,
   };
 }

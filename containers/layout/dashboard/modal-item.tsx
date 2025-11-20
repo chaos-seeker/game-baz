@@ -1,6 +1,7 @@
 'use client';
 
 import { InputImage } from '@/components/input-image';
+import { InputQuestion } from '@/components/input-question';
 import { Modal } from '@/components/modal';
 import { useModal } from '@/hooks/modal';
 import { TGuessPicture } from '@/types/guess-picture';
@@ -26,6 +27,17 @@ const formSchema = z.object({
     .refine((file) => file !== null, {
       message: 'لطفا تصویر را انتخاب کنید',
     }),
+  questions: z
+    .array(
+      z.object({
+        text: z.string().min(1, 'لطفا متن سوال را وارد کنید'),
+        isCorrect: z.boolean(),
+      }),
+    )
+    .length(4, 'باید 4 سوال وارد کنید')
+    .refine((questions) => questions.some((q) => q.isCorrect), {
+      message: 'حداقل یک پاسخ صحیح باید انتخاب شود',
+    }),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -43,8 +55,15 @@ export const ModalItem = (props: IModalItemProps) => {
     resolver: zodResolver(formSchema),
     defaultValues: {
       image: null,
+      questions: [
+        { text: '', isCorrect: false },
+        { text: '', isCorrect: false },
+        { text: '', isCorrect: false },
+        { text: '', isCorrect: false },
+      ],
     },
   });
+
   const handleBtnClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -53,7 +72,6 @@ export const ModalItem = (props: IModalItemProps) => {
 
   const onSubmit = async (data: FormValues) => {
     try {
-      // TODO: ارسال داده به سرور
       console.log('Form data:', data);
       toast.success(
         props.mode === 'edit' ? 'با موفقیت ویرایش شد' : 'با موفقیت افزوده شد',
@@ -74,6 +92,19 @@ export const ModalItem = (props: IModalItemProps) => {
         onClose={modal.hide}
         className="max-w-[350px] sm:max-w-[500px]"
         title={props.mode === 'edit' ? 'ویرایش' : 'افزودن'}
+        footer={
+          <button
+            type="submit"
+            disabled={form.formState.isSubmitting}
+            className="rounded-lg w-full bg-primary px-4 py-3.5 text-sm font-medium text-white transition-colors hover:bg-primary/90 disabled:opacity-50"
+          >
+            {form.formState.isSubmitting
+              ? 'در حال ارسال...'
+              : props.mode === 'edit'
+                ? 'ویرایش'
+                : 'افزودن'}
+          </button>
+        }
       >
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <div className="flex flex-col items-center justify-center">
@@ -89,19 +120,11 @@ export const ModalItem = (props: IModalItemProps) => {
               )}
             />
           </div>
-          <div className="pt-4">
-            <button
-              type="submit"
-              disabled={form.formState.isSubmitting}
-              className="rounded-lg w-full bg-primary px-4 py-3.5 text-sm font-medium text-white transition-colors hover:bg-primary/90 disabled:opacity-50"
-            >
-              {form.formState.isSubmitting
-                ? 'در حال ارسال...'
-                : props.mode === 'edit'
-                  ? 'ویرایش'
-                  : 'افزودن'}
-            </button>
-          </div>
+          <InputQuestion
+            control={form.control}
+            setValue={form.setValue}
+            errors={form.formState.errors}
+          />
         </form>
       </Modal>
     </>
