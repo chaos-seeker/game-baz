@@ -1,0 +1,29 @@
+@import "tailwindcss";
+
+@theme inline {
+  --text-xsp: 13px;
+  --text-smp: 15px;
+  --text-mdp: 17px;
+}
+
+@layer base {
+  *{
+    @apply border-gray-200;
+  }
+  body {
+    @apply flex min-h-dvh flex-col overflow-x-hidden;
+  }
+  input {
+    @apply outline-none;
+  }
+  main {
+    @apply flex h-full flex-1 flex-col gap-5 pt-6 pb-10;
+  }
+  button {
+    @apply cursor-pointer;
+  }
+}
+
+@utility container {
+  @apply mx-auto max-w-7xl px-4;
+}
