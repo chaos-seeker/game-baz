@@ -28,15 +28,11 @@ export const GuessPicture = () => {
     scale: 1,
   });
 
-  const {
-    data: guessPicture,
-    isLoading,
-    refetch,
-  } = trpc.guessPicture.getRandom.useQuery(undefined, {
+  const fetchData = trpc.guessPicture.getRandom.useQuery(undefined, {
     refetchOnWindowFocus: false,
   });
 
-  const questions = guessPicture?.questions || [];
+  const questions = fetchData.data?.questions || [];
 
   const correctQuestion = useMemo(
     () => questions.find((q) => q.isCorrect),
@@ -44,10 +40,10 @@ export const GuessPicture = () => {
   );
 
   useEffect(() => {
-    if (guessPicture) {
+    if (fetchData.data) {
       setZoomPosition(generateRandomZoom());
     }
-  }, [guessPicture]);
+  }, [fetchData.data]);
 
   const handleTimerComplete = () => {
     if (correctQuestion) {
@@ -67,7 +63,7 @@ export const GuessPicture = () => {
     setSelectedId(null);
     setIsPlaying(true);
     setTimerKey((prev) => prev + 1);
-    await refetch();
+    await fetchData.refetch();
     setIsLoadingNext(false);
   };
 
@@ -90,7 +86,7 @@ export const GuessPicture = () => {
     return className;
   };
 
-  if (isLoading || isLoadingNext) {
+  if (fetchData.isLoading || isLoadingNext) {
     return (
       <section>
         <div className="container">
@@ -102,7 +98,7 @@ export const GuessPicture = () => {
     );
   }
 
-  if (!guessPicture) {
+  if (!fetchData.data) {
     return (
       <section>
         <div className="container">
@@ -141,14 +137,18 @@ export const GuessPicture = () => {
           <div className="flex items-center justify-center overflow-hidden rounded-xl">
             <div className="relative w-[300px] h-[300px] aspect-square">
               <Image
-                src={guessPicture.image}
+                src={fetchData.data.image}
                 alt="guess picture"
                 fill
                 className="rounded-xl object-cover"
                 style={{
-                  objectPosition: `${zoomPosition.x}% ${zoomPosition.y}%`,
-                  transform: `scale(${zoomPosition.scale})`,
-                  filter: 'blur(4px)',
+                  objectPosition: isPlaying
+                    ? `${zoomPosition.x}% ${zoomPosition.y}%`
+                    : 'center',
+                  transform: isPlaying
+                    ? `scale(${zoomPosition.scale})`
+                    : 'scale(1)',
+                  filter: isPlaying ? 'blur(4px)' : 'none',
                 }}
                 unoptimized
               />

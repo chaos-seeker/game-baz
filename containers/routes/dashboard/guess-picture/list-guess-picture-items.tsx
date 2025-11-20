@@ -122,7 +122,7 @@ export const ListGuessPictureItems = () => {
 
   return (
     <>
-      <section className="h-[calc(100vh-190px)] w-full container">
+      <section className="min-h-[calc(100vh-190px)] w-full container">
         <div className="flex-1 overflow-auto rounded-xl border">
           <div className="w-full">
             <table className="w-full">
