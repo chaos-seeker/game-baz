@@ -1,9 +1,9 @@
-import { ListItems } from '@/containers/routes/dashboard/guess-picture/list-items';
+import { ListGuessPictureItems } from '@/containers/routes/dashboard/guess-picture/list-guess-picture-items';
 
 export default function Page() {
   return (
     <>
-      <ListItems />
+      <ListGuessPictureItems />
     </>
   );
 }

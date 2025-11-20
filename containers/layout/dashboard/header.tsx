@@ -1,6 +1,6 @@
 'use client';
 
-import { ModalItem } from './modal-item';
+import { ModalGuessPicture } from './modal-guess-picture';
 import { cn } from '@/utils/cn';
 import { Plus } from 'lucide-react';
 import Link from 'next/link';
@@ -69,7 +69,7 @@ const Tabs = () => {
                 {item.label}
               </button>
               {isActive && (
-                <ModalItem
+                <ModalGuessPicture
                   modalKey="add-guess-picture"
                   mode="add"
                   btn={
