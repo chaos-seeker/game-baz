@@ -120,7 +120,7 @@ export default [
       'import/no-unresolved': [
         'error',
         {
-          ignore: ['^nuqs/', '^@bprogress/'],
+          ignore: [],
         },
       ],
       'import/no-duplicates': 'error',

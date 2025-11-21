@@ -3,7 +3,6 @@
 import { trpc, trpcClient } from '@/utils/trpc';
 import { ProgressProvider } from '@bprogress/next/app';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { NuqsAdapter } from 'nuqs/adapters/next/app';
 import { PropsWithChildren, Suspense } from 'react';
 import { Toaster } from 'react-hot-toast';
 
@@ -38,10 +37,6 @@ const ReactQuery = (props: PropsWithChildren) => {
   );
 };
 
-const Nuqs = (props: PropsWithChildren) => {
-  return <NuqsAdapter>{props.children}</NuqsAdapter>;
-};
-
 const HotToast = () => {
   return <Toaster position="top-center" containerClassName="toaster-wrapper" />;
 };
@@ -51,12 +46,10 @@ export const Providers = (props: PropsWithChildren) => {
     <>
       <Bprogress>
         <ReactQuery>
-          <Nuqs>
-            <Suspense>
-              <HotToast />
-              {props.children}
-            </Suspense>
-          </Nuqs>
+          <Suspense>
+            <HotToast />
+            {props.children}
+          </Suspense>
         </ReactQuery>
       </Bprogress>
     </>
