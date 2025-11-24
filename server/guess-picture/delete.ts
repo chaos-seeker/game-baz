@@ -1,8 +1,7 @@
 import { z } from 'zod';
+import { developmentOnlyProcedure } from '../trpc';
 
-import { publicProcedure } from '../trpc';
-
-export const deleteGuessPicture = publicProcedure
+export const deleteGuessPicture = developmentOnlyProcedure
   .input(z.object({ id: z.string() }))
   .mutation(async ({ ctx, input }) => {
     return ctx.prisma.guessPicture.delete({

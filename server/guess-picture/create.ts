@@ -1,9 +1,9 @@
 import { guessPictureSchema } from '@/schemas/guess-picture';
 
 import type { TGuessPicture } from '../../types/guess-picture';
-import { publicProcedure } from '../trpc';
+import { developmentOnlyProcedure } from '../trpc';
 
-export const create = publicProcedure
+export const create = developmentOnlyProcedure
   .input(guessPictureSchema)
   .mutation(async ({ ctx, input }): Promise<TGuessPicture> => {
     const result = await ctx.prisma.guessPicture.create({

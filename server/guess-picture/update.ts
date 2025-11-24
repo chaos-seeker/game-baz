@@ -2,9 +2,9 @@ import { guessPictureSchema } from '@/schemas/guess-picture';
 import { z } from 'zod';
 
 import type { TGuessPicture } from '../../types/guess-picture';
-import { publicProcedure } from '../trpc';
+import { developmentOnlyProcedure } from '../trpc';
 
-export const update = publicProcedure
+export const update = developmentOnlyProcedure
   .input(
     z.object({
       id: z.string(),

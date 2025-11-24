@@ -4,12 +4,9 @@ import { getAll as getAllGuessPictures } from './guess-picture/get-all';
 import { getById as getGuessPictureById } from './guess-picture/get-by-id';
 import { getRandom as getRandomGuessPicture } from './guess-picture/get-random';
 import { update as updateGuessPicture } from './guess-picture/update';
-import { createTRPCRouter, publicProcedure } from './trpc';
+import { createTRPCRouter } from './trpc';
 
 export const appRouter = createTRPCRouter({
-  healthcheck: publicProcedure.query(() => {
-    return { status: 'ok' };
-  }),
   guessPicture: createTRPCRouter({
     create: createGuessPicture,
     getAll: getAllGuessPictures,
