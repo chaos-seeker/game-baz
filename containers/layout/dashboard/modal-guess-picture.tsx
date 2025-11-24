@@ -95,6 +95,9 @@ export const ModalGuessPicture = (props: IModalGuessPictureProps) => {
       modal.hide();
       form.reset(defaultFormValues);
     },
+    onError: (error) => {
+      toast.error(error.message);
+    },
   });
   const updateMutation = trpc.guessPicture.update.useMutation({
     onSuccess: () => {
@@ -102,6 +105,9 @@ export const ModalGuessPicture = (props: IModalGuessPictureProps) => {
       utils.guessPicture.getAll.invalidate();
       modal.hide();
       form.reset(defaultFormValues);
+    },
+    onError: (error) => {
+      toast.error(error.message);
     },
   });
   useEffect(() => {

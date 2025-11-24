@@ -37,6 +37,9 @@ export const ListGuessPictureItems = () => {
       toast.success('با موفقیت حذف شد');
       utils.guessPicture.getAll.invalidate();
     },
+    onError: (error) => {
+      toast.error(error.message);
+    },
   });
   const handleDelete = async (id: string) => {
     if (confirm('آیا مطمئن هستید که می‌خواهید این آیتم را حذف کنید؟')) {

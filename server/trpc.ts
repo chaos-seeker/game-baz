@@ -1,5 +1,6 @@
 import type { PrismaClient } from '@/generated/prisma/client';
 import { initTRPC, TRPCError } from '@trpc/server';
+import superjson from 'superjson';
 
 import { prisma } from '../lib/prisma';
 
@@ -13,10 +14,14 @@ export const createTRPCContext = async () => {
   };
 };
 
-const t = initTRPC.context<Context>().create();
+const t = initTRPC.context<Context>().create({
+  transformer: superjson,
+});
 
 export const createTRPCRouter = t.router;
+
 export const router = t.router;
+
 export const publicProcedure = t.procedure;
 export const developmentOnlyProcedure = t.procedure.use(({ next }) => {
   if (process.env.NODE_ENV !== 'development') {
