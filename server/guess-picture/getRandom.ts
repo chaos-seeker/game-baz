@@ -1,15 +1,35 @@
+import { os } from '@orpc/server';
+import { z } from 'zod';
+import { prisma } from '@/lib/prisma';
 import type { TGuessPicture } from '../../types/guess-picture';
-import { publicProcedure } from '../trpc';
 
-export const getRandom = publicProcedure.query(
-  async ({ ctx }): Promise<TGuessPicture | null> => {
-    const count = await ctx.prisma.guessPicture.count();
+export const guessPictureGetRandom = os
+  .input(z.void())
+  .output(
+    z
+      .object({
+        id: z.string(),
+        image: z.string(),
+        questions: z.array(
+          z.object({
+            id: z.number(),
+            text: z.string(),
+            isCorrect: z.boolean(),
+          }),
+        ),
+        createdAt: z.date(),
+        updatedAt: z.date(),
+      })
+      .nullable(),
+  )
+  .handler(async (): Promise<TGuessPicture | null> => {
+    const count = await prisma.guessPicture.count();
     if (count === 0) {
       return null;
     }
 
     const randomSkip = Math.floor(Math.random() * count);
-    const result = await ctx.prisma.guessPicture.findFirst({
+    const result = await prisma.guessPicture.findFirst({
       skip: randomSkip,
       include: {
         questions: true,
@@ -36,5 +56,4 @@ export const getRandom = publicProcedure.query(
       ...mapped,
       questions: shuffledQuestions,
     };
-  },
-);
+  });

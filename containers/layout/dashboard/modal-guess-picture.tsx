@@ -1,11 +1,12 @@
 'use client';
 
+import { orpc } from '@/app/providers';
 import { InputImage } from '@/components/input-image';
 import { InputQuestion } from '@/components/input-question';
 import { Modal } from '@/components/modal';
 import { useModal } from '@/hooks/modal';
 import { TGuessPicture } from '@/types/guess-picture';
-import { trpc } from '@/utils/trpc';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ReactNode, useEffect, useRef } from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -81,32 +82,44 @@ const fileToBase64 = (file: File): Promise<string> => {
 export const ModalGuessPicture = (props: IModalGuessPictureProps) => {
   const modal = useModal(props.modalKey);
   const formRef = useRef<HTMLFormElement>(null);
-  const utils = trpc.useUtils();
+  const queryClient = useQueryClient();
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     mode: 'onBlur',
     reValidateMode: 'onChange',
     defaultValues: defaultFormValues,
   });
-  const createMutation = trpc.guessPicture.create.useMutation({
+  const createMutation = useMutation({
+    mutationFn: (input: {
+      image: string;
+      questions: Array<{ text: string; isCorrect: boolean }>;
+    }) => orpc.guessPicture.create(input),
     onSuccess: () => {
       toast.success('با موفقیت افزوده شد');
-      utils.guessPicture.getAll.invalidate();
+      queryClient.invalidateQueries({ queryKey: ['guessPicture'] });
+      queryClient.refetchQueries({ queryKey: ['guessPicture.getAll'] });
       modal.hide();
       form.reset(defaultFormValues);
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       toast.error(error.message);
     },
   });
-  const updateMutation = trpc.guessPicture.update.useMutation({
+  const updateMutation = useMutation({
+    mutationFn: (input: {
+      id: string;
+      data: {
+        image: string;
+        questions: Array<{ text: string; isCorrect: boolean }>;
+      };
+    }) => orpc.guessPicture.update(input),
     onSuccess: () => {
       toast.success('با موفقیت ویرایش شد');
-      utils.guessPicture.getAll.invalidate();
+      queryClient.invalidateQueries({ queryKey: ['guessPicture'] });
       modal.hide();
       form.reset(defaultFormValues);
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       toast.error(error.message);
     },
   });
@@ -150,12 +163,12 @@ export const ModalGuessPicture = (props: IModalGuessPictureProps) => {
       })),
     };
     if (props.mode === 'edit' && props.item?.id) {
-      await updateMutation.mutateAsync({
+      updateMutation.mutate({
         id: props.item.id,
         data: payload,
       });
     } else {
-      await createMutation.mutateAsync(payload);
+      createMutation.mutate(payload);
     }
   };
   const isSubmitting =

@@ -1,8 +1,9 @@
 'use client';
 
-import { trpc } from '@/utils/trpc';
+import { orpc } from '@/app/providers';
 import Image from 'next/image';
 import { useEffect, useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { CountdownCircleTimer } from 'react-countdown-circle-timer';
 
 type ZoomPosition = {
@@ -28,7 +29,9 @@ export const GuessPicture = () => {
     scale: 1,
   });
 
-  const fetchData = trpc.guessPicture.getRandom.useQuery(undefined, {
+  const fetchData = useQuery({
+    queryKey: ['guessPicture.getRandom'],
+    queryFn: () => orpc.guessPicture.getRandom(),
     refetchOnWindowFocus: false,
   });
 
@@ -86,7 +89,7 @@ export const GuessPicture = () => {
     return className;
   };
 
-  if (fetchData.isLoading || isLoadingNext) {
+  if (fetchData.isPending || isLoadingNext) {
     return (
       <section>
         <div className="container">
@@ -155,24 +158,26 @@ export const GuessPicture = () => {
             </div>
           </div>
           <div className="grid grid-cols-2 gap-2">
-            {questions.map((question) => {
-              const isSelected = selectedId === question.id;
-              const isCorrect = question.isCorrect;
-              return (
-                <button
-                  key={question.id}
-                  onClick={() => handleSelect(question.id)}
-                  disabled={hasSelection}
-                  className={getButtonClassName(
-                    isSelected,
-                    isCorrect,
-                    hasSelection,
-                  )}
-                >
-                  {question.text}
-                </button>
-              );
-            })}
+            {questions.map(
+              (question: { id: number; text: string; isCorrect: boolean }) => {
+                const isSelected = selectedId === question.id;
+                const isCorrect = question.isCorrect;
+                return (
+                  <button
+                    key={question.id}
+                    onClick={() => handleSelect(question.id)}
+                    disabled={hasSelection}
+                    className={getButtonClassName(
+                      isSelected,
+                      isCorrect,
+                      hasSelection,
+                    )}
+                  >
+                    {question.text}
+                  </button>
+                );
+              },
+            )}
           </div>
           {!isPlaying && (
             <button

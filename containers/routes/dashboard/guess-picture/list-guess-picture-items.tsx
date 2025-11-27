@@ -1,9 +1,10 @@
 'use client';
 
+import { orpc } from '@/app/providers';
 import { ModalGuessPicture } from '@/containers/layout/dashboard/modal-guess-picture';
 import { useModal } from '@/hooks/modal';
 import type { TGuessPicture } from '@/types/guess-picture';
-import { trpc } from '@/utils/trpc';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   createColumnHelper,
   flexRender,
@@ -18,8 +19,11 @@ import toast from 'react-hot-toast';
 const columnHelper = createColumnHelper<TGuessPicture>();
 
 export const ListGuessPictureItems = () => {
-  const utils = trpc.useUtils();
-  const fetchData = trpc.guessPicture.getAll.useQuery();
+  const queryClient = useQueryClient();
+  const fetchData = useQuery({
+    queryKey: ['guessPicture'],
+    queryFn: () => orpc.guessPicture.getAll(),
+  });
   const [editingItem, setEditingItem] = useState<TGuessPicture | null>(null);
   const editModal = useModal('edit-guess-picture');
   useEffect(() => {
@@ -32,18 +36,19 @@ export const ListGuessPictureItems = () => {
       setEditingItem(null);
     }
   }, [editModal.isShow, editingItem]);
-  const deleteMutation = trpc.guessPicture.delete.useMutation({
+  const deleteMutation = useMutation({
+    mutationFn: (input: { id: string }) => orpc.guessPicture.delete(input),
     onSuccess: () => {
       toast.success('با موفقیت حذف شد');
-      utils.guessPicture.getAll.invalidate();
+      queryClient.invalidateQueries({ queryKey: ['guessPicture'] });
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       toast.error(error.message);
     },
   });
   const handleDelete = async (id: string) => {
     if (confirm('آیا مطمئن هستید که می‌خواهید این آیتم را حذف کنید؟')) {
-      await deleteMutation.mutateAsync({ id });
+      deleteMutation.mutate({ id });
     }
   };
   const columns = useMemo(
@@ -115,7 +120,7 @@ export const ListGuessPictureItems = () => {
     getCoreRowModel: getCoreRowModel(),
   });
 
-  if (fetchData.isLoading) {
+  if (fetchData.isPending) {
     return (
       <div className="flex h-full items-center justify-center py-12">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
